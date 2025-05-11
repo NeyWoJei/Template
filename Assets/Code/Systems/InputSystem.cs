@@ -38,5 +38,17 @@ namespace Game.Systems
             }
             return false;
         }
+        public async UniTask<bool> WaitForAnyInput(float timeLimit) {
+            float elapsed = 0f;
+            
+            while (elapsed < timeLimit) {
+                if(Input.anyKeyDown || Input.GetMouseButton(0)) {
+                    return true;
+                }
+                await UniTask.Yield();
+                elapsed += Time.deltaTime;
+            }
+            return false;
+        }
     }
 }

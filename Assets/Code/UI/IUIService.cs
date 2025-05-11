@@ -13,8 +13,6 @@ namespace Game.UI
         UniTask HidePauseMenu();
         void ShowSettingsMenu();
         UniTask HideSettingsMenu();
-        void ShowDialog(string message, Action onYes, Action onNo);
-        UniTask HideDialog();
         void SetStartButtonAction(Action onClick);
     }
 }

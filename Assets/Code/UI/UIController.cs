@@ -1,20 +1,14 @@
-using System;
 using Cysharp.Threading.Tasks;
+using Game.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
 
 namespace Game.UI
 {
-    public class UIController : MonoBehaviour
+    public class UIController : IInitializable
     {
         [Inject] private UIManager _uiManager;
-
-        private void Start()
-        {
-            Initialize();
-        }
-
         public void Initialize()
         {
             _uiManager.SetStartButtonAction(OnStartGame);
@@ -23,8 +17,6 @@ namespace Game.UI
             _uiManager.SetQuitButtonPauseAction(OnQuitPauseMenu);
             _uiManager.SetSettingsButtonAction(OnOpenSettings);
             _uiManager.SetCloseSettingsButtonAction(OnCloseSettings);
-            _uiManager.SetYesButtonAction(OnDialogYes);
-            _uiManager.SetNoButtonAction(OnDialogNo);
         }
 
         private void OnStartGame()
@@ -67,21 +59,6 @@ namespace Game.UI
         private void OnCloseSettings()
         {
             _uiManager.HideSettingsMenu().Forget();
-        }
-
-        private void OnDialogYes()
-        {
-            _uiManager.HideDialog().Forget();
-        }
-
-        private void OnDialogNo()
-        {
-            _uiManager.HideDialog().Forget();
-        }
-
-        public void ShowDialog(string message, Action onYes, Action onNo)
-        {
-            _uiManager.ShowDialog(message, onYes, onNo);
         }
     }
 }

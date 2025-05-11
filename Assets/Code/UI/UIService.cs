@@ -32,12 +32,6 @@ namespace Game.UI
         public UniTask HideSettingsMenu() {
             return _uiManager.HideSettingsMenu();
         }
-        public void ShowDialog(string message, Action onYes, Action onNo) {
-            _uiManager.ShowDialog(message, onYes, onNo);
-        }
-        public UniTask HideDialog() {
-           return _uiManager.HideDialog();
-        }
         public void SetStartButtonAction(Action onClick) {
             _uiManager.SetStartButtonAction(onClick);
         }

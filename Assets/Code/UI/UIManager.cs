@@ -1,13 +1,13 @@
 using System;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-using TMPro;
+using Game.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Game.UI
 {
-    public class UIManager : MonoBehaviour
+    public class UIManager : MonoBehaviour, IInitializable
     {
         [Header("МенюСтарта")]
         [SerializeField] private Button startButton;
@@ -31,13 +31,11 @@ namespace Game.UI
         [SerializeField] private Slider volumeSlider;
         [SerializeField] private Toggle fullscreenToggle;
 
-        [Space(10)] [Header("Диалоговое Окно")]
-        [SerializeField] private RectTransform dialogPanel;
-        [SerializeField] private TMP_Text dialogText;
-        [SerializeField] private Button yesButton;
-        [SerializeField] private Button noButton;
-
         private void Start()
+        {
+            Initialize();
+        }
+        public void Initialize()
         {
             ShowMainMenu();
             volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
@@ -123,30 +121,6 @@ namespace Game.UI
             Screen.fullScreen = isFullscreen;
         }
 
-        // DIALOG WINDOW
-
-        public void ShowDialog(string message, Action onYes, Action onNo)
-        {
-            dialogText.text = message;
-            dialogPanel.gameObject.SetActive(true);
-            dialogPanel.localScale = Vector3.zero;
-            dialogPanel.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack);
-
-            yesButton.onClick.RemoveAllListeners();
-            noButton.onClick.RemoveAllListeners();
-            yesButton.onClick.AddListener(() => onYes());
-            noButton.onClick.AddListener(() => onNo());
-        }
-
-        public async UniTask HideDialog()
-        {
-            await dialogPanel.DOScale(Vector3.zero, 0.2f)
-                .SetEase(Ease.InBack)
-                .AsyncWaitForCompletion();
-
-            dialogPanel.gameObject.SetActive(false);
-        }
-
         // BUTTON ACTIONS
 
         public void SetStartButtonAction(Action onClick)
@@ -183,18 +157,6 @@ namespace Game.UI
         {
             closeSettingsButton.onClick.RemoveAllListeners();
             closeSettingsButton.onClick.AddListener(() => onClick?.Invoke());
-        }
-
-        public void SetYesButtonAction(Action onClick)
-        {
-            yesButton.onClick.RemoveAllListeners();
-            yesButton.onClick.AddListener(() => onClick?.Invoke());
-        }
-
-        public void SetNoButtonAction(Action onClick)
-        {
-            noButton.onClick.RemoveAllListeners();
-            noButton.onClick.AddListener(() => onClick?.Invoke());
         }
     }
 }
