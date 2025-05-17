@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Cysharp.Threading.Tasks;
 using Game.Core;
 using Game.UI;
@@ -11,6 +10,9 @@ namespace Game.States
         [Inject] private IGameStateService _gameStateService;
         [Inject] private UIManager _uiManager;
         [Inject] private ISaveLoadService _saveLoadService;
+        public PauseState() {
+        UnityEngine.Debug.Log("PauseState запущен.");
+        }
 
         public async UniTask Enter() {
             _gameStateService.SetPaused(true);

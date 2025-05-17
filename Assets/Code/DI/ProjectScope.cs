@@ -2,71 +2,100 @@ using VContainer;
 using VContainer.Unity;
 using Game.Core;
 using Game.States;
-using Game.UI;
 using Game.Systems;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 using System;
+using Game.Systems.Audio;
 
 using CoreInitializable = Game.Core.IInitializable;
 using CoreTickable = Game.Core.ITickable;
 using CoreFixedTickable = Game.Core.IFixedTickable;
-using Game.Systems.Audio;
 
-namespace Game.DI 
+namespace Game.DI
 {
     public class ProjectScope : LifetimeScope
     {
-        protected override void Configure(IContainerBuilder builder) {
-            ConfigureCoreSystems(builder);
-            ConfigureGameStatus(builder);
-            ConfigureUIModule(builder);
-            ConfigureAnimationSystems(builder);
-            ConfigureEvents(builder);
-            ConfigureInput(builder);
-            ConfigureSaveLoad(builder);
-            ConfigureGameLoop(builder);
-            ConfigureAudio(builder);
+        private ProjectScope _instance;
+        private static bool _isInitialized = false;
 
-            RegisterBuildTick(builder); // регистрация тиков
+        private new void Awake()
+        {
+            if (_instance != null && _instance != this) {
+                Debug.LogWarning("Обнаружен второй экземпялр ProjectScope, уничтожаем его.");
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+            
+            base.Awake();
+        }
+        
+        protected override void Configure(IContainerBuilder builder)
+        {
+            if (_isInitialized)
+            {
+                Debug.LogWarning("ProjectScope уже инициализирован, пропускаем повторный вызов");
+                return;
+            }
+            _isInitialized = true;
+
+            try
+            {
+                ConfigureCoreSystems(builder);      // 1. Core системы
+                ConfigureGameStatus(builder);       // 2. Состояния игры
+                ConfigureAudio(builder);            // 3. Аудио системы
+                // ConfigureUIModule(builder);         // 4. UI
+                ConfigureAnimationSystems(builder); // 5. Анимация
+                ConfigureEvents(builder);           // 6. События
+                ConfigureInput(builder);            // 7. Ввод
+                ConfigureSaveLoad(builder);         // 8. Сохранение и загрузка
+                ConfigureGameLoop(builder);         // 9. Игровой цикл
+                RegisterBuildTick(builder);         // 10. Регистрация в игровом цикле
+
+                Debug.Log(builder.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Ошибка в ProjectScope конфигурации: {ex.Message}\n{ex.StackTrace}");
+            }
         }
 
-        private void ConfigureCoreSystems(IContainerBuilder builder) {
+        private void ConfigureCoreSystems(IContainerBuilder builder)
+        {
             builder.Register<IGameStateService, GameStateService>(Lifetime.Singleton);
             builder.Register<ISceneLoader, SceneLoader>(Lifetime.Singleton);
-            builder.Register<IGameStateMachine, GameStateMachine>(Lifetime.Singleton);
             builder.Register<CheckPointSystem>(Lifetime.Singleton);
+            builder.Register<PoolSystem>(Lifetime.Singleton).As<CoreInitializable>();
         }
 
-        private void ConfigureGameStatus(IContainerBuilder builder) {
-            builder.Register<BootstrapState>(Lifetime.Singleton);
-            builder.Register<LoadLevelState>(Lifetime.Singleton);
-            builder.Register<MenuState>(Lifetime.Singleton);
-            builder.Register<GameplayState>(Lifetime.Singleton);
-            builder.Register<PauseState>(Lifetime.Singleton);
+        private void ConfigureGameStatus(IContainerBuilder builder)
+        {
+            builder.Register<IGameStateMachine, GameStateMachine>(Lifetime.Singleton).AsSelf();
+            builder.Register<LoadLevelState>(Lifetime.Singleton).As<IGameState>();
+            builder.Register<BootstrapState>(Lifetime.Singleton)
+                .AsSelf()
+                .As<IGameState, CoreInitializable>();
         }
 
-        private void ConfigureUIModule(IContainerBuilder builder) {
-            builder.Register<IUIService, UIService>(Lifetime.Singleton);
-            builder.RegisterComponentInHierarchy<UIManager>();
-            builder.Register<UIController>(Lifetime.Singleton)
-                .As<CoreInitializable>();
-        }
-
-        private void ConfigureAnimationSystems(IContainerBuilder builder) {
+        private void ConfigureAnimationSystems(IContainerBuilder builder)
+        {
             builder.Register<AnimationSystem>(Lifetime.Singleton);
         }
 
-        private void ConfigureEvents(IContainerBuilder builder) {
+        private void ConfigureEvents(IContainerBuilder builder)
+        {
             builder.Register<EventBus>(Lifetime.Singleton);
         }
 
-        private void ConfigureInput(IContainerBuilder builder) {
+        private void ConfigureInput(IContainerBuilder builder)
+        {
             builder.Register<InputSystem>(Lifetime.Singleton);
         }
 
-        private void ConfigureSaveLoad(IContainerBuilder builder) {
+        private void ConfigureSaveLoad(IContainerBuilder builder)
+        {
             builder.Register<ISaveLoadService, SaveLoadSystem>(Lifetime.Singleton);
         }
 
@@ -75,27 +104,61 @@ namespace Game.DI
             builder.RegisterComponentInHierarchy<GameLoop>()
                 .AsSelf()
                 .As<CoreInitializable, CoreTickable, CoreFixedTickable>();
-        }    
-
-        private void ConfigureAudio(IContainerBuilder builder) {
-            builder.Register<IAudioSystem, AudioSystem>(Lifetime.Singleton);
         }
 
-        private void RegisterBuildTick(IContainerBuilder builder) {
+        private void ConfigureAudio(IContainerBuilder builder)
+        {
+            builder.Register<IAudioSystem, AudioSystem>(Lifetime.Singleton).As<CoreInitializable>();
+        }
+
+        private void RegisterBuildTick(IContainerBuilder builder)
+        {
+            Debug.Log("BuildTick");
             builder.RegisterBuildCallback(container =>
             {
-                var gameLoop = container.Resolve<GameLoop>();
+                Debug.Log("RegisterBuildTick вызван");
+                try
+                {
+                    var gameLoop = container.Resolve<GameLoop>();
+                    var stateMachine = container.Resolve<IGameStateMachine>();
 
-                RegisterToLoop(container.Resolve<IEnumerable<CoreTickable>>(), gameLoop.RegisterTickable);
-                RegisterToLoop(container.Resolve<IEnumerable<CoreInitializable>>(), gameLoop.RegisterInitializable);
-                RegisterToLoop(container.Resolve<IEnumerable<CoreFixedTickable>>(), gameLoop.RegisterFixedTickable);
+                    var states = container.Resolve<IEnumerable<IGameState>>();
+                    foreach (var state in states)
+                    {
+                        stateMachine.AddState(state);
+                    }
 
-                gameLoop.Initialize();
+                    var bootstrapState = container.Resolve<BootstrapState>();
+                    bootstrapState.SetStateMachine(stateMachine);
+
+                    RegisterToLoop(container.Resolve<IEnumerable<CoreTickable>>(), gameLoop.RegisterTickable, "CoreTickable");
+                    RegisterToLoop(container.Resolve<IEnumerable<CoreInitializable>>(), gameLoop.RegisterInitializable, "CoreInitializable");
+                    RegisterToLoop(container.Resolve<IEnumerable<CoreFixedTickable>>(), gameLoop.RegisterFixedTickable, "CoreFixedTickable");
+
+                    gameLoop.Initialize();
+                    Debug.Log("Build tick завершил регистрацию");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Ошибки в RegisterBuildTick: {ex.Message}\n{ex.StackTrace}");
+                }
             });
         }
-        private void RegisterToLoop<T>(IEnumerable<T> list, Action<T> register) {
-            foreach (var item in list) 
-                register(item);
-        }   
+
+        private void RegisterToLoop<T>(IEnumerable<T> list, Action<T> register, string typeName)
+        {
+            Debug.Log($"Регистрируем следующие: {typeName}");
+            if (list == null)
+            {
+                Debug.LogError($"Список с {typeName} пуст!");
+                return;
+            }
+            foreach (var item in list)
+            {
+                Debug.Log($"Регистрация {typeName}: {item?.GetType().Name ?? "пусто"}");
+                if (item != null) register(item);
+                else Debug.LogWarning($"Обнаружен пустой {typeName} в списке.");
+            }
+        }
     }
 }

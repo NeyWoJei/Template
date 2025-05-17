@@ -4,10 +4,13 @@ using VContainer;
 
 namespace Game.Systems
 {
-    public class InputSystem : MonoBehaviour
+    public class InputSystem
     {
         [Inject] private EventBus _eventBus;
 
+        public InputSystem() {
+        Debug.Log("inputSystem is Starting");
+        }
         public void CheckKeyPress(KeyCode keyCode, string eventId) {
             if (Input.GetKeyDown(keyCode)) {
                 _eventBus.TriggerEventWithId(eventId);

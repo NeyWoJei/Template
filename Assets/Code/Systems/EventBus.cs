@@ -9,6 +9,9 @@ namespace Game.Systems
         public Subject<Unit> OnGameEvent { get; } = new Subject<Unit>();
         public Subject<string> OnTriggerEvent { get; } = new Subject<string>();
         private readonly Dictionary<Type, object> _subjects = new();
+        public EventBus() {
+        UnityEngine.Debug.Log("EventBus запущен.");
+        }
 
         public Subject<T> GetSubject<T>() {
             var type = typeof(T);

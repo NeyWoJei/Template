@@ -5,9 +5,12 @@ using VContainer;
 
 namespace Game.Systems
 {
-    public class CheckPointSystem : MonoBehaviour
+    public class CheckPointSystem
     {
         [Inject] private ISaveLoadService _saveLoadService;
+        public CheckPointSystem() {
+        Debug.Log("CheckPointSystem is Starting");
+        }
 
         public async UniTask ReachCheckpoint(string levelName) {
             SaveData saveData = new SaveData {

@@ -3,14 +3,27 @@ using Game.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
+using Game.States;
 
 namespace Game.UI
 {
     public class UIController : IInitializable
     {
+        private const string GAME_SCENE_NAME = "GameScene";
         [Inject] private UIManager _uiManager;
+        [Inject] private GameStateMachine _gameStateMachine;
+
+        public UIController()
+        {
+            Debug.Log("UIController запущен.");
+        }
+        public void SetUIManager(UIManager uiManager)
+        {
+            _uiManager = uiManager;
+        }
         public void Initialize()
         {
+            Debug.Log("UIController инициализирован.");
             _uiManager.SetStartButtonAction(OnStartGame);
             _uiManager.SetQuitButtonMainMenuAction(OnQuitMainMenu);
             _uiManager.SetResumeButtonAction(OnResumeGame);
@@ -19,23 +32,24 @@ namespace Game.UI
             _uiManager.SetCloseSettingsButtonAction(OnCloseSettings);
         }
 
-        private void OnStartGame()
+        private async void OnStartGame()
         {
-            _uiManager.HideMainMenu().Forget();
+            Debug.Log("OnStartGame вызван.");
             _uiManager.ShowLoadingScreen();
-
-            SceneManager.LoadSceneAsync("GameScene", LoadSceneMode.Single).completed += (asyncOp) =>
-            {
-                _uiManager.HideLoadingScreen();
-            };
+            await UniTask.Delay(1000);
+            
+            await _uiManager.HideMainMenu();
+            await _gameStateMachine.Enter<GameplayState>();
+            await SceneManager.LoadSceneAsync(GAME_SCENE_NAME, LoadSceneMode.Single);
+            
         }
 
         private void OnQuitMainMenu()
         {
             Application.Quit();
-#if UNITY_EDITOR
-    UnityEditor.EditorApplication.isPlaying = false;
-#endif
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #endif
         }
 
         private void OnResumeGame()

@@ -22,7 +22,7 @@ namespace Game.UI
         [SerializeField] private Button quitButtonPause;
 
         [Space(10)] [Header("МенюЗагрузочногоЭкрана")]
-        [SerializeField] private RectTransform loadingPanel;
+        [SerializeField] private Image loadingImage;
 
         [Space(10)] [Header("МенюНастроекИгры")]
         [SerializeField] private RectTransform settingsPanel;
@@ -31,9 +31,9 @@ namespace Game.UI
         [SerializeField] private Slider volumeSlider;
         [SerializeField] private Toggle fullscreenToggle;
 
-        private void Start()
+        public void Awake()
         {
-            Initialize();
+            DontDestroyOnLoad(gameObject);
         }
         public void Initialize()
         {
@@ -58,7 +58,13 @@ namespace Game.UI
                 .SetUpdate(true)
                 .AsyncWaitForCompletion();
 
+            if (gameObject == null)
+            {
+                Debug.Log("UIManager уничтожен.");
+                return;
+            }
             menuPanel.gameObject.SetActive(false);
+
         }
 
         // PAUSE MENU
@@ -83,14 +89,16 @@ namespace Game.UI
 
         public void ShowLoadingScreen()
         {
-            loadingPanel.gameObject.SetActive(true);
-            loadingPanel.localScale = Vector3.zero;
-            loadingPanel.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack);
+            loadingImage.gameObject.SetActive(true);
+            loadingImage.color = new Color(loadingImage.color.r, loadingImage.color.g, loadingImage.color.b, 0);
+            loadingImage.DOFade(1, 0.7f);
         }
 
         public void HideLoadingScreen()
         {
-            loadingPanel.gameObject.SetActive(false);
+            loadingImage.gameObject.SetActive(true);
+            loadingImage.color = new Color(loadingImage.color.r, loadingImage.color.g, loadingImage.color.b, 1);
+            loadingImage.DOFade(0, 0.7f);
         }
 
         // SETTINGS

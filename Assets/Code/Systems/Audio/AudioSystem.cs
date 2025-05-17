@@ -3,7 +3,6 @@ using Game.Core;
 using R3;
 using UnityEngine;
 using VContainer;
-using Game.Systems.Audio;
 namespace Game.Systems.Audio
 {
     public class AudioSystem : IAudioSystem, IInitializable 
@@ -16,6 +15,8 @@ namespace Game.Systems.Audio
         private AudioSource _musicSource;
 
         public AudioSystem() {
+            Debug.Log("AudioSystem is starting.");
+            
             _sfxClips = new Dictionary<string, AudioClip>();
             _musicClips = new Dictionary<string, AudioClip>();
         }

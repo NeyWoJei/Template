@@ -5,6 +5,9 @@ namespace Game.Systems
 {
     public class AnimationSystem : MonoBehaviour
     {
+        public AnimationSystem() {
+        Debug.Log("AnimationSystem is Starting");
+        }
         public void MoveObject(Transform target, Vector3 endPosition, float duration) {
             target.DOMove(endPosition, duration).SetEase(Ease.InOutSine);
         }

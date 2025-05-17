@@ -10,6 +10,10 @@ namespace Game.Core
         [Inject] private EventBus _eventBus;
         private const string SaveKey = "GameSave";
 
+        public SaveLoadSystem() {
+        Debug.Log("SaveLoadSystem запущен.");
+        }
+
         public async UniTask SaveAsync(SaveData data) {
             string json = JsonUtility.ToJson(data);
             PlayerPrefs.SetString(SaveKey, json);
