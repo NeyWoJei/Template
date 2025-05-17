@@ -1,21 +1,70 @@
+using System.Collections.Generic;
+using Code.Systems.Events;
 using Cysharp.Threading.Tasks;
+using Game.Core;
 using UnityEngine;
 using VContainer;
 
 namespace Game.Systems
 {
-    public class InputSystem
+    public class InputSystem : IInitializable
     {
         [Inject] private EventBus _eventBus;
 
-        public InputSystem() {
-        Debug.Log("inputSystem is Starting");
+        private Dictionary<KeyCode, string> _keyEventMap = new();
+        private bool _listening;
+
+        public InputSystem()
+        {
+            Debug.Log("InputSystem is Starting");
         }
-        public void CheckKeyPress(KeyCode keyCode, string eventId) {
-            if (Input.GetKeyDown(keyCode)) {
-                _eventBus.TriggerEventWithId(eventId);
+        public void Initialize()
+        {
+            RegisterKey(KeyCode.Escape, InputEvents.ESC);
+            StartListening();
+        }
+
+        public void RegisterKey(KeyCode key, string eventId)
+        {
+            if (!_keyEventMap.ContainsKey(key))
+                _keyEventMap.Add(key, eventId);
+        }
+
+        public void UnregisterKey(KeyCode key)
+        {
+            if (_keyEventMap.ContainsKey(key))
+                _keyEventMap.Remove(key);
+        }
+
+        public void StartListening()
+        {
+            if (_listening) return;
+            _listening = true;
+            ListenLoop().Forget();
+        }
+
+        public void StopListening()
+        {
+            _listening = false;
+        }
+
+        private async UniTaskVoid ListenLoop()
+        {
+            while (_listening)
+            {
+                foreach (var pair in _keyEventMap)
+                {
+                    if (Input.GetKeyDown(pair.Key))
+                    {
+                        _eventBus.TriggerEventWithId(pair.Value);
+                    }
+                }
+
+                await UniTask.Yield();
             }
         }
+        
+
         public async UniTask<bool> WaitForDoublePress(KeyCode keyCode, float timeLimit) {
             bool firstPress = await WaitForKeyPress(keyCode, timeLimit);
             if (!firstPress) {

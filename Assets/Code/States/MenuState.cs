@@ -7,7 +7,7 @@ namespace Game.States
 {
     public class MenuState : IGameState
     {
-        [Inject]private IUIService _uiService;
+        [Inject] private IUIService _uiService;
 
         public MenuState()
         {
@@ -20,6 +20,8 @@ namespace Game.States
             try
             {
                 var uiService = _uiService; 
+                await uiService.HideLoadingScreen();
+                
                 uiService.ShowMainMenu();
                 await UniTask.Delay(1000);
                 UnityEngine.Debug.Log("MenuState завершает Enter");

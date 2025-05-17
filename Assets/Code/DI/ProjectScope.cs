@@ -2,6 +2,7 @@ using VContainer;
 using VContainer.Unity;
 using Game.Core;
 using Game.States;
+using Game.UI;
 using Game.Systems;
 using System.Collections.Generic;
 using UnityEngine;
@@ -46,7 +47,7 @@ namespace Game.DI
                 ConfigureCoreSystems(builder);      // 1. Core системы
                 ConfigureGameStatus(builder);       // 2. Состояния игры
                 ConfigureAudio(builder);            // 3. Аудио системы
-                // ConfigureUIModule(builder);         // 4. UI
+                ConfigureUIModule(builder);         // 4. UI
                 ConfigureAnimationSystems(builder); // 5. Анимация
                 ConfigureEvents(builder);           // 6. События
                 ConfigureInput(builder);            // 7. Ввод
@@ -77,6 +78,9 @@ namespace Game.DI
             builder.Register<BootstrapState>(Lifetime.Singleton)
                 .AsSelf()
                 .As<IGameState, CoreInitializable>();
+            builder.Register<MenuState>(Lifetime.Singleton).As<IGameState>().AsSelf();
+            builder.Register<PauseState>(Lifetime.Singleton).As<IGameState>();
+            builder.Register<GameplayState>(Lifetime.Singleton).As<IGameState>();
         }
 
         private void ConfigureAnimationSystems(IContainerBuilder builder)
@@ -88,10 +92,19 @@ namespace Game.DI
         {
             builder.Register<EventBus>(Lifetime.Singleton);
         }
+        private void ConfigureUIModule(IContainerBuilder builder)
+        {
+            Debug.Log("Регистрация IUIService в ProjectScope");
+            builder.RegisterComponentInHierarchy<UIManager>().AsSelf();
+            builder.Register<UIService>(Lifetime.Singleton).As<IUIService>();
+            builder.Register<UIController>(Lifetime.Singleton)
+                .As<CoreInitializable>()
+                .AsSelf();
+        }
 
         private void ConfigureInput(IContainerBuilder builder)
         {
-            builder.Register<InputSystem>(Lifetime.Singleton);
+            builder.Register<InputSystem>(Lifetime.Singleton).As<CoreInitializable>();
         }
 
         private void ConfigureSaveLoad(IContainerBuilder builder)

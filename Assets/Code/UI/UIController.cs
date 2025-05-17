@@ -1,18 +1,23 @@
 using Cysharp.Threading.Tasks;
 using Game.Core;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using VContainer;
 using Game.States;
+using Game.Systems;
+using Code.Systems.Events;
+using R3;
+using System;
 
 namespace Game.UI
 {
-    public class UIController : IInitializable
+    public class UIController : IInitializable, IDisposable
     {
-        private const string GAME_SCENE_NAME = "GameScene";
         [Inject] private UIManager _uiManager;
         [Inject] private GameStateMachine _gameStateMachine;
+        [Inject] private EventBus _eventBus;
+        private CompositeDisposable _disposables = new CompositeDisposable();
 
+        private bool isPaused = false;
         public UIController()
         {
             Debug.Log("UIController запущен.");
@@ -23,6 +28,8 @@ namespace Game.UI
         }
         public void Initialize()
         {
+            isPaused = false;
+
             Debug.Log("UIController инициализирован.");
             _uiManager.SetStartButtonAction(OnStartGame);
             _uiManager.SetQuitButtonMainMenuAction(OnQuitMainMenu);
@@ -30,6 +37,11 @@ namespace Game.UI
             _uiManager.SetQuitButtonPauseAction(OnQuitPauseMenu);
             _uiManager.SetSettingsButtonAction(OnOpenSettings);
             _uiManager.SetCloseSettingsButtonAction(OnCloseSettings);
+
+            _eventBus.OnTriggerEvent
+                .Where(id => id == InputEvents.ESC)
+                .Subscribe(_ => UOnPauseGame().Forget())
+                .AddTo(_disposables);
         }
 
         private async void OnStartGame()
@@ -37,19 +49,17 @@ namespace Game.UI
             Debug.Log("OnStartGame вызван.");
             _uiManager.ShowLoadingScreen();
             await UniTask.Delay(1000);
-            
+
             await _uiManager.HideMainMenu();
             await _gameStateMachine.Enter<GameplayState>();
-            await SceneManager.LoadSceneAsync(GAME_SCENE_NAME, LoadSceneMode.Single);
-            
         }
 
         private void OnQuitMainMenu()
         {
             Application.Quit();
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
-        #endif
+#endif
         }
 
         private void OnResumeGame()
@@ -61,7 +71,6 @@ namespace Game.UI
         private void OnQuitPauseMenu()
         {
             _uiManager.HidePauseMenu().Forget();
-            _uiManager.ShowMainMenu();
             Time.timeScale = 1;
         }
 
@@ -73,6 +82,24 @@ namespace Game.UI
         private void OnCloseSettings()
         {
             _uiManager.HideSettingsMenu().Forget();
+        }
+        private async UniTaskVoid UOnPauseGame()
+        {
+            isPaused = !isPaused;
+
+            if (isPaused)
+            {
+                _uiManager.ShowPauseMenu();
+            }
+            else
+            {
+                _uiManager.HidePauseMenu().Forget();
+            }
+                await UniTask.Yield();
+        }
+        public void Dispose()
+        {
+            _disposables.Dispose();
         }
     }
 }

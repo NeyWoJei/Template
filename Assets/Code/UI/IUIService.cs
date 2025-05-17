@@ -8,7 +8,7 @@ namespace Game.UI
         void ShowMainMenu();
         UniTask HideMainMenu();
         void ShowLoadingScreen();
-        void HideLoadingScreen();
+        UniTask HideLoadingScreen();
         void ShowPauseMenu();
         UniTask HidePauseMenu();
         void ShowSettingsMenu();

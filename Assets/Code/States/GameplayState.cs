@@ -1,19 +1,15 @@
 using Cysharp.Threading.Tasks;
 using Game.UI;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using VContainer;
 
 namespace Game.States
 {
     public class GameplayState : IGameState
     {
-        private UIManager _uiManager;
-
-        [Inject]
-        public void Construct(UIManager uiManager)
-        {
-            _uiManager = uiManager;
-        }
+        private const string GAME_SCENE_NAME = "GameScene";
+        [Inject] private IUIService _uiService;
 
         public GameplayState()
         {
@@ -24,8 +20,12 @@ namespace Game.States
         {
             Debug.Log("Выбран GameplayState");
 
-            _uiManager.HideLoadingScreen();
-            await _uiManager.HideMainMenu();
+            await SceneManager.LoadSceneAsync(GAME_SCENE_NAME, LoadSceneMode.Single);
+
+            await _uiService.HideLoadingScreen();
+            
+            _uiService.ShowMainMenu();
+
         }
 
         public UniTask Exit()

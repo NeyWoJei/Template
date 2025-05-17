@@ -11,7 +11,7 @@ namespace Game.States
         public async UniTask Enter() {
             _uiService.ShowMainMenu();
             await LoadGameData();
-            _uiService.HideLoadingScreen();
+            await _uiService.HideLoadingScreen();
         }
         public UniTask Exit() {
             return UniTask.CompletedTask;

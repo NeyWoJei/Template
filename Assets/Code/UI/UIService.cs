@@ -46,7 +46,7 @@ namespace Game.UI
             uiManager.ShowLoadingScreen();
         }
 
-        public void HideLoadingScreen()
+        public async UniTask HideLoadingScreen()
         {
             var uiManager = _uiManager;
             if (uiManager == null)
@@ -54,7 +54,7 @@ namespace Game.UI
                 UnityEngine.Debug.LogError("UIManager пуст в UIService.HideLoadingScreen!");
                 return;
             }
-            uiManager.HideLoadingScreen();
+            await uiManager.HideLoadingScreen();
         }
 
         public void ShowPauseMenu()

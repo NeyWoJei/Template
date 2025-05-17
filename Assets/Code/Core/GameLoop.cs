@@ -74,13 +74,13 @@ namespace Game.Core
 
         private void Update()
         {
-            if (Application.isPlaying)
+            // if (Application.isPlaying)
                 Tick(); 
         }
 
         private void FixedUpdate()
         {
-            if (Application.isPlaying)
+            // if (Application.isPlaying)
                 FixedTick(); 
         }
     }

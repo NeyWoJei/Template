@@ -9,12 +9,16 @@ namespace Game.UI
 {
     public class UIManager : MonoBehaviour, IInitializable
     {
+        [Space(10)] [Header("Главное")]
+        [SerializeField] private CanvasGroup menuCanvasGroup;
+
         [Header("МенюСтарта")]
         [SerializeField] private Button startButton;
         [SerializeField] private RectTransform menuPanel;
         [SerializeField] private Button quitButtonMainMenu;
 
         [Space(10)] [Header("МенюПаузы")]
+        [SerializeField] private CanvasGroup pauseCanvasGroup;
         [SerializeField] private RectTransform pausePanel;
         [SerializeField] private Button resumeButton;
 
@@ -25,6 +29,7 @@ namespace Game.UI
         [SerializeField] private Image loadingImage;
 
         [Space(10)] [Header("МенюНастроекИгры")]
+        [SerializeField] private CanvasGroup settingsCanvasGroup;
         [SerializeField] private RectTransform settingsPanel;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button closeSettingsButton;
@@ -46,17 +51,13 @@ namespace Game.UI
 
         public void ShowMainMenu()
         {
+            menuCanvasGroup.DOFade(1, 0.3f);
             menuPanel.gameObject.SetActive(true);
-            menuPanel.localScale = Vector3.zero;
-            menuPanel.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack);
         }
 
         public async UniTask HideMainMenu()
         {
-            await menuPanel.DOScale(Vector3.zero, 0.2f)
-                .SetEase(Ease.InBack)
-                .SetUpdate(true)
-                .AsyncWaitForCompletion();
+            await menuCanvasGroup.DOFade(0, 0.3f).AsyncWaitForCompletion();
 
             if (gameObject == null)
             {
@@ -72,16 +73,14 @@ namespace Game.UI
         public void ShowPauseMenu()
         {
             pausePanel.gameObject.SetActive(true);
-            pausePanel.localScale = Vector3.zero;
-            pausePanel.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutBack);
+            pauseCanvasGroup.alpha = 0;
+            pauseCanvasGroup.DOFade(1, 0.3f);
         }
 
         public async UniTask HidePauseMenu()
         {
-            await pausePanel.DOScale(Vector3.zero, 0.2f)
-                .SetEase(Ease.InBack)
-                .AsyncWaitForCompletion();
-
+            pauseCanvasGroup.DOFade(0, 0.3f);
+            await UniTask.Delay(300);
             pausePanel.gameObject.SetActive(false);
         }
 
@@ -94,11 +93,15 @@ namespace Game.UI
             loadingImage.DOFade(1, 0.7f);
         }
 
-        public void HideLoadingScreen()
+        public async UniTask HideLoadingScreen()
         {
             loadingImage.gameObject.SetActive(true);
             loadingImage.color = new Color(loadingImage.color.r, loadingImage.color.g, loadingImage.color.b, 1);
             loadingImage.DOFade(0, 0.7f);
+            
+            await UniTask.Delay(700);
+
+            loadingImage.gameObject.SetActive(false);
         }
 
         // SETTINGS
@@ -106,7 +109,6 @@ namespace Game.UI
         public void ShowSettingsMenu()
         {
             settingsPanel.gameObject.SetActive(true);
-            settingsPanel.localScale = Vector3.zero;
             settingsPanel.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack);
         }
 
